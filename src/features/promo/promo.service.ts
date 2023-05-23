@@ -3,24 +3,30 @@ import { GeneratePromoDto } from './dto/generate-promo.dto';
 import { UsePromoDto } from './dto/use-promo.dto';
 import { Promo } from './entities/promo.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { generateCode } from './utils/generateCode';
 import { PromoUsage } from './entities/promo-usage.entity';
 import { BonusWallet } from '../core/entities/bonus-wallet.entity';
 import { Transaction } from '../transactions/entities/transaction.entity';
-import { TransactionReason } from '../transactions/enums';
+import {
+  TransactionReason,
+  TransactionType,
+  TransactionWalletType,
+} from '../transactions/enums';
 
 @Injectable()
 export class PromoService {
   constructor(
     @InjectRepository(Promo)
     private readonly promoRepository: Repository<Promo>,
+    private dataSource: DataSource,
   ) {}
 
   async tryToSavePromo(promo: Promo) {
     try {
       return await this.promoRepository.save(promo);
     } catch (e) {
+      console.error(e);
       return false;
     }
   }
@@ -44,7 +50,7 @@ export class PromoService {
 
   async use(usePromoDto: UsePromoDto) {
     const { userId, code } = usePromoDto;
-    const { queryRunner } = this.promoRepository;
+    const queryRunner = this.dataSource.createQueryRunner();
 
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -75,12 +81,12 @@ export class PromoService {
       await queryRunner.manager.save(usage);
 
       let bonusWallet = await queryRunner.manager.findOneBy(BonusWallet, {
-        userId,
+        userId: promo.userId,
       });
 
       if (!bonusWallet) {
         bonusWallet = new BonusWallet();
-        bonusWallet.userId = userId;
+        bonusWallet.userId = promo.userId;
         bonusWallet.balance = 0;
       }
 
@@ -91,13 +97,16 @@ export class PromoService {
       const transaction = new Transaction();
       transaction.userId = userId;
       transaction.amount = promo.bonus;
-      transaction.type = 'promo';
+      transaction.type = TransactionType.TOP_UP;
       transaction.reason = TransactionReason.PROMO;
+      transaction.walletType = TransactionWalletType.BONUS;
+      transaction.promoHolder = promo.userId;
 
       await queryRunner.manager.save(transaction);
 
       await queryRunner.commitTransaction();
     } catch (err) {
+      console.error(err);
       // since we have errors lets rollback the changes we made
       await queryRunner.rollbackTransaction();
       return {

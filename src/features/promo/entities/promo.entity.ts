@@ -15,7 +15,10 @@ export class Promo extends BaseEntity {
   @Column()
   userId: string;
 
-  @Column()
+  @Column({
+    type: 'int',
+    default: 0,
+  })
   used: number;
 
   @Column({

@@ -1,11 +1,24 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { CoreService } from './core.service';
 import { CreateCoreDto } from './dto/create-core.dto';
 import { UpdateCoreDto } from './dto/update-core.dto';
 
-@Controller('core')
+@Controller('billing')
 export class CoreController {
   constructor(private readonly coreService: CoreService) {}
+
+  @Get('bonuses/:id')
+  getBonuses(@Param('id') userId: string) {
+    return this.coreService.getUserBonusWallet(userId);
+  }
 
   @Post()
   create(@Body() createCoreDto: CreateCoreDto) {

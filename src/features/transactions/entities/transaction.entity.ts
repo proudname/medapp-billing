@@ -1,10 +1,18 @@
 import { Column, CreateDateColumn, Entity } from 'typeorm';
-import { TransactionReason } from '../enums';
+import {
+  TransactionReason,
+  TransactionType,
+  TransactionWalletType,
+} from '../enums';
+import { BaseEntity } from '../../shared/db/base.entity';
 
 @Entity()
-export class Transaction {
+export class Transaction extends BaseEntity {
   @Column()
   userId: string;
+
+  @Column()
+  promoHolder: string;
 
   @Column()
   amount: number;
@@ -16,7 +24,10 @@ export class Transaction {
   reason: TransactionReason;
 
   @Column()
-  type: string;
+  walletType: TransactionWalletType;
+
+  @Column()
+  type: TransactionType;
 
   @CreateDateColumn()
   createdAt: Date;

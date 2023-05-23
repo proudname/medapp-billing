@@ -7,12 +7,12 @@ import { UsePromoDto } from './dto/use-promo.dto';
 export class PromoController {
   constructor(private readonly promoService: PromoService) {}
 
-  @Get()
+  @Post('/generate')
   generate(@Body() createPromoDto: GeneratePromoDto) {
     return this.promoService.generate(createPromoDto);
   }
 
-  @Post()
+  @Post('/use')
   use(@Body() updatePromoDto: UsePromoDto) {
     return this.promoService.use(updatePromoDto);
   }
